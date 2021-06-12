@@ -19,9 +19,6 @@ Get images (using auto bot thing)
 Search & get results
 
 
-when searching get both manga metadata & search results if site doesn't show both 
-
-
 todo: 
 - tags for extensions
 - search functionality - display results
