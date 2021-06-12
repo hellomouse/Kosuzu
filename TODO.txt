@@ -1,0 +1,53 @@
+Required:
+Download manga
+Filter by author, release date, genre, status, alphabetical, genre
+Maybe fancy filtering too
+Notifications for new releases
+Favorite manga / add to library, folders
+Search for manga in library
+Filter, display (see tachiyomi)
+Import existing manga
+
+Manga extension:
+Search
+Download
+Callbacks for update state
+Ie download progress or whatever
+
+Shared API:
+Get images (using auto bot thing)
+Search & get results
+
+
+when searching get both manga metadata & search results if site doesn't show both 
+
+
+todo: 
+- tags for extensions
+- search functionality - display results
+    - display name, cover, date, language, and author?
+    - merge search result data only if metadata is scanned
+
+- global search API
+- global download API
+- global get metadata API + database
+
+
+
+how to pause / resume?
+- pause order of adding I guess, ie don't add all images at once
+
+don't have manager at all 
+- have global queue, add when needed
+- ie only add a few things to the queue at once for the extension, rest are in another pseudoqeuee?
+    or have a real queue that's processed externally anyways so it doesn't really matter
+        real queue is hidden from extension timeout and stuff in metadata
+        real queue resolves search requests n' shit (ie get images for chapter)
+
+
+priority queue:
+- nullify download param and search param, when reached will abandon since cannot peek
+    - sohuld be 
+       - access page API
+       - download page image
+
