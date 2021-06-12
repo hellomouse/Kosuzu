@@ -20,7 +20,8 @@ Search & get results
 
 
 todo: 
-- tags for extensions
+- queue size limits?
+
 - search functionality - display results
     - display name, cover, date, language, and author?
     - merge search result data only if metadata is scanned

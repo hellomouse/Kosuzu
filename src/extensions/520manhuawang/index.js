@@ -1,18 +1,23 @@
-const metadata = {
-    id: '520-manhuawang',
-    name: '520 Manhua Wang',
-    description:
+module.exports = data => {
+    const metadata = {
+        id: '520-manhuawang',
+        name: '520 Manhua Wang',
+        description:
 `Chinese manhua & chinese manga translations from https://www.kokomh.com/
 This site offers limited search functionality and may be rate-limited`,
-    author: 'Bowserinator',
-    version: '1.0.0',
-    language: 'zh'
-};
+        author: 'Bowserinator',
+        version: '1.0.0',
+        language: 'zh',
+        tags: [
+            data.extension.TAGS.PUPPETEER,
+            data.extension.TAGS.ANTI_BOT,
+            data.extension.TAGS.LIMITED_SEARCH
+        ]
+    };
 
-module.exports = data => {
-    class Extension extends data.AbstractExtension {
+    class Extension extends data.extension.AbstractExtension {
         constructor() {
-            super(metadata);
+            super(metadata, new data.queue.Queue);
         }
 
         search(searchParams) {

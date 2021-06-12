@@ -6,14 +6,17 @@ required:
 
 - icon file in folder
 
-add tags to metadata
-- ie "slow - requires headless browser", "rate limited", "limited search functionality"
-- etc...
-
 warnings for suspicious extensions
 - check for weird metadata / conflicting ids
 - code etc
 */
+
+/* Hardcoded tags */
+const TAGS = {
+    PUPPETEER: 0, // Uses puppeteer internally
+    ANTI_BOT: 1, // Endpoint employs anti-bot features / strong rate limiting
+    LIMITED_SEARCH: 2 // Search functionality is severely limited by endpoint
+};
 
 /**
  * Abstract extension, all extensions must return
@@ -21,6 +24,20 @@ warnings for suspicious extensions
  * @author Bowserinator
  */
 class AbstractExtension {
+    /**
+     * Construct an abstract extension
+     * @param {object} metadata metadata for the extension. Must contain the following keys:
+     *                              id: Unique id for the extension
+     *                              name: Display name for the extension
+     *                          Optional keys:
+     *                              description: (default: 'No description provided')
+     *                              author: (default: 'Anonymous')
+     *                              version: (default: 'Unknown version')
+     *                              language: (Default: 'en') language the extension is directed towards, use '*' if
+     *                                        results are mostly multilingual
+     *                              tags: (Default: []), special tags for the extension, use TAGS.[tag name]
+     * @param {AbstractQueue} queue Queue for actions
+     */
     constructor(metadata, queue) {
         this.metadata = this._verifyMetadata(metadata);
         this.queue = queue;
@@ -105,9 +122,10 @@ class AbstractExtension {
         newMetadata.author = metadata.author + '' || 'Anonymous';
         newMetadata.version = metadata.version + '' || 'Unknown version';
         newMetadata.language = metadata.language + '' || 'en';
+        newMetadata.tags = metadata.tags || [];
 
         return newMetadata;
     }
 }
 
-module.exports = { AbstractExtension };
+module.exports = { AbstractExtension, TAGS };

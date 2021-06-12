@@ -2,7 +2,7 @@ const ext = require('./src/extensions/520manhuawang/index.js');
 const SearchData = require('./src/server/params/req-search.js');
 
 const data = {
-    'AbstractExtension': require('./src/server/extension.js').AbstractExtension,
+    'extension': require('./src/server/extension.js'),
     'download': require('./src/server/util/download.js')
 };
 
