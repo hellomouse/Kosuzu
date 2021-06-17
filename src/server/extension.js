@@ -11,6 +11,12 @@ warnings for suspicious extensions
 - code etc
 */
 
+const path = require('path');
+const fs = require('fs-extra');
+
+const ActionConstants = require('./actions/constants.js');
+const download = require('./util/download.js');
+
 /* Hardcoded tags */
 const TAGS = {
     PUPPETEER: 0, // Uses puppeteer internally
@@ -27,7 +33,7 @@ class AbstractExtension {
     /**
      * Construct an abstract extension
      * @param {object} metadata metadata for the extension. Must contain the following keys:
-     *                              id: Unique id for the extension
+     *                              id: Unique id for the extension, should match folder name in extensions
      *                              name: Display name for the extension
      *                          Optional keys:
      *                              description: (default: 'No description provided')
@@ -37,10 +43,74 @@ class AbstractExtension {
      *                                        results are mostly multilingual
      *                              tags: (Default: []), special tags for the extension, use TAGS.[tag name]
      * @param {AbstractQueue} queue Queue for actions
+     * @param {AbstractQueue} requestQueue Queue for requests
      */
-    constructor(metadata, queue) {
+    constructor(metadata, queue, requestQueue) {
         this.metadata = this._verifyMetadata(metadata);
         this.queue = queue;
+        this.requestQueue = requestQueue;
+
+        this.metadataCache = {};
+    }
+
+    /**
+     * Update request queue. If request queue is empty push to
+     * request queue from action queue
+     */
+    async tick() {
+        let nextRequest = this.requestQueue.pop();
+
+        // No request action, pull from action queue
+        if (!nextRequest) {
+            let action = this.queue.pop();
+            while (action && action.cancelled)
+                action = this.queue.pop();
+            if (!action)
+                return;
+            for (let req of action.toRequest())
+                this.requestQueue.add(req);
+        }
+        // Process request
+        else {
+            console.log(nextRequest);
+            // TODO: how to pass data out lol? Write to temp cache? have function to access data?
+            // like search -> if no cache -> queue search action and await
+
+            if (nextRequest.type === ActionConstants.SEARCH)
+                this.search(nextRequest.data);
+            else if (nextRequest.type === ActionConstants.START_IMG_DOWNLOAD) {
+                // Generate metadata cache if needed
+                if (!this.metadataCache[nextRequest.id])
+                    this.metadataCache[nextRequest.id] = await this.getMangaInfo(nextRequest.id);
+
+                // TODO: this loads 2 reqests at once, seperate
+
+                let metadata = this.metadataCache[nextRequest.id];
+
+                // TODO: check invalid id? & emit error
+                if (nextRequest.chapter < 0 || nextRequest.chapter >= metadata.chapter_count)
+                    return;
+
+                let id = metadata.chapters[nextRequest.chapter].id;
+
+                let imgUrls = await this.getChapterImages(id);
+
+                // TODO higher pirority for image downloads
+                for (let img of imgUrls)
+                    this.requestQueue.add({
+                        type: ActionConstants.DOWNLOAD_IMG,
+                        data: img,
+                        manga_id: nextRequest.id,
+                        chapter: nextRequest.chapter,
+                        priority: 1
+                    });
+            } else if (nextRequest.type === ActionConstants.DOWNLOAD_IMG) {
+                const dir = `./${nextRequest.manga_id.replace(/[/\\?%*:|"<>]/g, '-')}/${nextRequest.chapter}/`;
+                fs.ensureDirSync(dir);
+                download.download(nextRequest.data.url, dir + `${nextRequest.data.page}.png`); // TODO: detect file ext?
+            }
+            // TODO: download img to folder
+        }
     }
 
     /**
@@ -57,7 +127,7 @@ class AbstractExtension {
      * ]
      * @param {SearchData} searchParams Search parameters
      */
-    search(searchParams) {
+    async search(searchParams) {
         throw new Error('search(searchParams) is not yet implemented, please override');
     }
 
@@ -71,7 +141,7 @@ class AbstractExtension {
      *    last_updated: { year: ..., month: ..., day: ... },
      *    genres: [ 'string', 'string', ... ],
      *    description: 'string description',
-     *    chapter_count: 10,
+     *    chapter_count: number of chapters,
      *    ongoing: true / false
      *    chapters: [
      *      {
@@ -84,7 +154,7 @@ class AbstractExtension {
      *    ]
      * @param {string} id ID for the manga
      */
-    getMangaInfo(id) {
+    async getMangaInfo(id) {
         throw new Error('getMangaInfo(id) is not yet implemented, please override');
     }
 
@@ -92,7 +162,7 @@ class AbstractExtension {
      * Return an array of urls to all the images in the chapter
      * @param {string} id Id of the chapter, format depends on implementation in getMangaInfo
      */
-    getChapterImages(id) {
+    async getChapterImages(id) {
         throw new Error('getChapterImages(id) is not yet implemented, please override');
     }
 
@@ -128,4 +198,29 @@ class AbstractExtension {
     }
 }
 
-module.exports = { AbstractExtension, TAGS };
+/**
+ * Require() an extension and return instance
+ * @param {string} extid Id of the extension, should match folder name in src/extensions
+ * @param {boolean} reload Reload the extension (clear require cache)
+ * @return {AbstractExtension} Extension object, or null if error
+ */
+function loadExtension(extid, reload = false) {
+    try {
+        const dir = path.join('../extensions/', extid);
+
+        if (reload)
+            delete require.cache[require.resolve(dir)];
+        const ext = require(dir);
+        const data = {
+            extension: require('./extension.js'),
+            download: require('./util/download.js'),
+            queue: require('./util/queue.js')
+        };
+
+        return new (ext(data))();
+    } catch (e) {
+        return null;
+    }
+}
+
+module.exports = { AbstractExtension, TAGS, loadExtension };

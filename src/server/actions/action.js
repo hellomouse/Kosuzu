@@ -3,7 +3,7 @@
  * that can be cancelled
  * @author Bowserinator
  */
-class AbstractRequestParameter {
+class AbstractAction {
     constructor(priority) {
         this.cancelled = false;
         this.priority = priority;
@@ -13,6 +13,14 @@ class AbstractRequestParameter {
     cancel() {
         this.cancelled = true;
     }
+
+    /**
+     * Convert to request action data
+     * @return {Array} array of objects for each request type
+     */
+    toRequest() {
+        throw new Error('toRequest() not implemented, please override');
+    }
 }
 
-module.exports = AbstractRequestParameter;
+module.exports = AbstractAction;

@@ -1,6 +1,7 @@
 /* Download queue */
 
 const EventEmitter = require('events');
+const config = require('../../../config.js');
 
 /**
  * Abstract download queue implementation,
@@ -98,6 +99,9 @@ class Queue extends AbstractQueue {
     }
 
     add(item) {
+        if (this.size + 1 >= config.max_queue_size_per_extension)
+            return;
+
         super.add(item);
         let priority = item.priority || 0;
 

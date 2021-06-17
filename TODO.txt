@@ -20,16 +20,18 @@ Search & get results
 
 
 todo: 
-- queue size limits?
-
 - search functionality - display results
     - display name, cover, date, language, and author?
     - merge search result data only if metadata is scanned
 
 - global search API
+    - input search request
 - global download API
+    - input download request
+    - clear items from queue
 - global get metadata API + database
 
+localhost server? => sockets
 
 
 how to pause / resume?

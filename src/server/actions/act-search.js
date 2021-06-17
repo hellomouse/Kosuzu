@@ -1,7 +1,8 @@
 /** Shared method of passing search parameters */
 
 const util = require('../util/util.js');
-const AbstractRequestParameter = require('./req-params.js');
+const AbstractAction = require('./action.js');
+const ActionConstants = require('./constants.js');
 
 const _allowedKeys = ['name', 'date', 'id', 'author', 'genreInclude', 'genreExclude', 'sort', 'status'];
 const _allowedSort = ['date', 'top', 'new', 'alpha'];
@@ -12,7 +13,7 @@ const _allowedStatus = ['ongoing', 'completed'];
  * Unified search parameters
  * @author Bowserinator
  */
-class SearchData extends AbstractRequestParameter {
+class SearchData extends AbstractAction {
     /**
      * Construct a parameter instance form a data.
      *
@@ -34,7 +35,7 @@ class SearchData extends AbstractRequestParameter {
      * @param {object} data An object containing all the data for the search parameter.
      */
     constructor(sources, data) {
-        super(2); // Search has highest priority
+        super(0); // Search has highest priority
 
         for (let key of Object.keys(data))
             util.assert(_allowedKeys.includes(key), `Key '${key}' is not allowed in data, did you misspell the key?`);
@@ -55,6 +56,14 @@ class SearchData extends AbstractRequestParameter {
 
         for (let key of Object.keys(data))
             this[key] = data[key];
+    }
+
+    toRequest() {
+        return [{
+            type: ActionConstants.SEARCH,
+            data: this,
+            priority: 0
+        }];
     }
 }
 

@@ -17,7 +17,7 @@ This site offers limited search functionality and may be rate-limited`,
 
     class Extension extends data.extension.AbstractExtension {
         constructor() {
-            super(metadata, new data.queue.Queue);
+            super(metadata, new data.queue.Queue(), new data.queue.Queue());
         }
 
         search(searchParams) {
@@ -50,8 +50,8 @@ This site offers limited search functionality and may be rate-limited`,
             });
         }
 
-        getMangaInfo(params) {
-            return data.download.pageEval(params.url,
+        getMangaInfo(url) {
+            return data.download.pageEval(url,
                 () => {
                     const worksInfo = document.getElementsByClassName('works-info-tc');
                     const chapters = [...document.getElementById('mh-chapter-list-ol-0').getElementsByTagName('li')]
@@ -63,14 +63,15 @@ This site offers limited search functionality and may be rate-limited`,
                                 date: null
                             };
                         });
+                    chapters.reverse();
 
                     return {
-                        url: params.url,
+                        url: window.location.href,
                         title: document.getElementsByClassName('mh-date-info-name')[0].innerText,
                         author: worksInfo[0].innerText.split('： ')[1],
                         cover_image: document.getElementsByClassName('mh-date-bgpic')[0].getElementsByTagName('img')[0].src,
-                        last_updated: params.last_updated, // Year not obtainable from manhua page
-                        genres: params.genres, // Not obtainable from the manhua page, only in search
+                        last_updated: null, // Year not obtainable from manhua page
+                        genres: [], // Not obtainable from the manhua page, only in search
                         description: document.getElementById('workint').innerText,
                         chapter_count: chapters.length,
                         ongoing: worksInfo[1].innerText.includes('连载中'), // 连载中 / 完结 (serializing / completed)
@@ -93,8 +94,8 @@ This site offers limited search functionality and may be rate-limited`,
             return data.download.pageEval(url,
                 () => qTcms_S_m_murl.split('$').filter(x => x.startsWith('http')).map((x, i) => {
                     return {
-                        'page': i + 1,
-                        'url': x
+                        page: i + 1,
+                        url: x
                     };
                 }),
                 {
